@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Libro IA — Los que no tenían voz</title>
+
+  <style>
+    :root{
+      --paper:#fffdf8;
+      --ink:#2b241d;
+      --muted:#6f665d;
+      --line:#d9cab9;
+      --accent:#6f4b33;
+      --ok:#2f6d52;
+      --danger:#9d2e31;
+      --shadow:0 12px 28px rgba(0,0,0,.10);
+      --radius:18px;
+
+      --book-width:760px;
+      --book-height:980px;
+      --book-font:17px;
+      --book-line:1.55;
+
+      --words-per-page:320;
+      --print-words-per-page:280;
+      --epub-words-per-page:220;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      font-family:Georgia,"Times New Roman",serif;
+      color:var(--ink);
+      background:radial-gradient(circle at top,#faf6ef 0%,#f2eadf 54%,#eadfce 100%);
+    }
+
+    .app{
+      max-width:1500px;
+      margin:0 auto;
+      padding:20px;
+    }
+
+    .header{
+      background:linear-gradient(180deg,rgba(255,253,248,.98),rgba(247,241,231,.98));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:22px;
+      margin-bottom:18px;
+    }
+
+    .header-top{
+      display:flex;
+      justify-content:space-between;
+      gap:16px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+
+    .header h1{
+      margin:0 0 8px 0;
+      color:var(--accent);
+      font-size:34px;
+      line-height:1.1;
+    }
+
+    .header p{
+      margin:0;
+      color:var(--muted);
+      line-height:1.6;
+      max-width:760px;
+    }
+
+    .header-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+
+    .tab-btn{
+      border:1px solid var(--line);
+      background:var(--paper);
+      color:var(--ink);
+      padding:12px 18px;
+      border-radius:12px;
+      cursor:pointer;
+      font-size:15px;
+      font-weight:700;
+      box-shadow:var(--shadow);
+    }
+
+    .tab-btn.active{
+      background:var(--accent);
+      color:#fff;
+      border-color:var(--accent);
+    }
+
+    .panel{display:none}
+    .panel.active{display:block}
+
+    .card{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    .card h2,.card h3{
+      margin:0 0 12px 0;
+      color:var(--accent);
+    }
+
+    .field{margin-bottom:14px}
+
+    .field label{
+      display:block;
+      margin-bottom:6px;
+      font-weight:700;
+      font-size:14px;
+    }
+
+    input[type="text"],select,textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:12px;
+      font:inherit;
+      color:var(--ink);
+      background:#fff;
+    }
+
+    input[readonly]{
+      background:#f8f2e9;
+      color:var(--muted);
+    }
+
+    textarea{
+      resize:vertical;
+      min-height:110px;
+      line-height:1.55;
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    button{
+      border:none;
+      border-radius:12px;
+      padding:12px 16px;
+      font-size:14px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    button:hover{
+      transform:translateY(-1px);
+      opacity:.96;
+    }
+
+    .secondary{background:#e6dbcf;color:var(--ink)}
+    .success{background:var(--ok);color:#fff}
+    .danger{background:var(--danger);color:#fff}
+
+    .status{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.5;
+    }
+
+    .small-note{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.5;
+      margin-top:6px;
+    }
+
+    .editor-grid{
+      display:grid;
+      grid-template-columns:160px 1fr;
+      gap:12px;
+    }
+
+    .layout-book{
+      display:grid;
+      grid-template-columns:320px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    .book-sidebar{
+      position:sticky;
+      top:18px;
+      align-self:start;
+    }
+
+    .book-cover{
+      background:linear-gradient(180deg,rgba(111,75,51,.97),rgba(83,55,38,.98));
+      border-radius:22px;
+      padding:26px 22px;
+      color:#fff;
+      box-shadow:var(--shadow);
+      margin-bottom:14px;
+    }
+
+    .book-cover .kicker{
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      opacity:.82;
+      margin-bottom:10px;
+    }
+
+    .book-cover h2{
+      color:#fff;
+      margin:0 0 10px 0;
+      font-size:31px;
+      line-height:1.08;
+    }
+
+    .book-cover p{
+      margin:0;
+      line-height:1.55;
+      color:rgba(255,255,255,.88);
+      font-size:14px;
+    }
+
+    .stats-box,.book-nav{
+      background:var(--paper);
+      border:1px solid var(--line);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:14px;
+      margin-bottom:14px;
+    }
+
+    .stats-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .stat{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:10px;
+    }
+
+    .stat .label{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+
+    .stat .value{
+      font-size:20px;
+      color:var(--accent);
+      font-weight:700;
+    }
+
+    .book-frame{
+      background:linear-gradient(180deg,#fffefb 0%,#fcf8f1 100%);
+      border:1px solid var(--line);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .book-topbar{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      padding:16px 22px;
+      border-bottom:1px solid #eadfce;
+      background:linear-gradient(180deg,#fcf8f1,#faf3ea);
+      flex-wrap:wrap;
+    }
+
+    .book-topbar h2{
+      margin:0;
+      font-size:27px;
+      color:var(--accent);
+    }
+
+    .book-topbar .meta{
+      color:var(--muted);
+      font-size:14px;
+      margin-top:4px;
+    }
+
+    .book-page-wrap{
+      display:flex;
+      justify-content:center;
+      padding:24px;
+      background:linear-gradient(90deg,rgba(0,0,0,.03),transparent 7%,transparent 93%,rgba(0,0,0,.03));
+    }
+
+    .book-page{
+      width:100%;
+      max-width:var(--book-width);
+      min-height:var(--book-height);
+      background:linear-gradient(180deg,rgba(255,255,255,.98),rgba(252,248,241,.98));
+      border:1px solid #e6d8c7;
+      border-radius:12px;
+      padding:42px 54px 62px;
+      position:relative;
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.6),0 14px 32px rgba(0,0,0,.05);
+    }
+
+    .book-page h3{
+      margin:0 0 20px 0;
+      color:var(--accent);
+      font-size:28px;
+      line-height:1.15;
+      text-align:center;
+    }
+
+    .book-page-content{
+      white-space:pre-wrap;
+      font-size:var(--book-font);
+      line-height:var(--book-line);
+      color:var(--ink);
+      min-height:720px;
+      word-break:break-word;
+    }
+
+    .page-number{
+      position:absolute;
+      left:0;
+      right:0;
+      bottom:22px;
+      text-align:center;
+      color:var(--muted);
+      font-size:14px;
+    }
+
+    .book-empty{
+      padding:40px;
+      color:var(--muted);
+      line-height:1.7;
+      font-size:18px;
+    }
+
+    .book-actions{
+      padding:0 22px 22px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .hidden{display:none !important}
+
+    @media (max-width:1180px){
+      .layout-book{grid-template-columns:1fr}
+      .book-sidebar{position:static}
+    }
+
+    @media (max-width:900px){
+      .editor-grid,.stats-grid{grid-template-columns:1fr}
+      .book-page{
+        padding:34px 24px 64px;
+        min-height:800px;
+      }
+      .book-page-content{font-size:17px}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-top">
+        <div>
+          <h1>Libro IA — Los que no tenían voz</h1>
+          <p>
+            Herramienta sencilla para guardar dedicatoria, prólogo, capítulos, leer la novela en modo libro y exportarla en varios formatos.
+          </p>
+        </div>
+
+        <div class="header-actions">
+          <button class="secondary" onclick="exportData()">Exportar JSON</button>
+          <button class="secondary" onclick="triggerImportData()">Importar JSON</button>
+          <button class="secondary" onclick="exportTxt()">Exportar TXT</button>
+          <button class="secondary" onclick="exportTxtChaptersZip()">Exportar capítulos ZIP</button>
+          <button class="secondary" onclick="exportHtmlBook()">Exportar HTML libro</button>
+          <button class="secondary" onclick="exportDocx()">Exportar DOCX</button>
+          <button class="secondary" onclick="triggerCoverImageInput()">Cargar portada EPUB</button>
+          <button class="secondary" onclick="exportEpub()">Exportar EPUB</button>
+          <button class="danger" onclick="resetChapterData()">Vaciar capítulos</button>
+          <button class="danger" onclick="hardResetAll()">Borrado total</button>
+
+          <input type="file" id="coverImageInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="loadCoverImage(event)">
+          <input type="file" id="importJsonInput" accept=".json,application/json" style="display:none" onchange="importDataFromFile(event)">
+        </div>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="workPanel">Modo edición</button>
+      <button class="tab-btn" data-tab="bookPanel">Modo libro</button>
+    </div>
+
+    <section id="workPanel" class="panel active">
+      <div class="card">
+        <h2>Edición del libro</h2>
+
+        <div class="field">
+          <label for="dedicationInput">Dedicatoria</label>
+          <textarea id="dedicationInput" style="min-height:120px;" placeholder="Escribe aquí la dedicatoria del libro."></textarea>
+        </div>
+
+        <div class="field">
+          <label for="prologueInput">Prólogo</label>
+          <textarea id="prologueInput" style="min-height:220px;" placeholder="Escribe aquí el prólogo del libro."></textarea>
+        </div>
+
+        <div class="toolbar">
+          <button class="success" onclick="saveFrontMatter()">Guardar dedicatoria y prólogo</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--line);margin:22px 0;">
+
+        <div class="field">
+          <label for="chapterTargetSelect">Capítulo</label>
+          <select id="chapterTargetSelect" onchange="onEditorChapterChange()"></select>
+        </div>
+
+        <div class="editor-grid">
+          <div class="field">
+            <label for="chapterNumberInput">Número</label>
+            <input type="text" id="chapterNumberInput" readonly />
+          </div>
+
+          <div class="field">
+            <label for="chapterTitleInput">Título del capítulo</label>
+            <input type="text" id="chapterTitleInput" placeholder="Ejemplo: Capítulo 1. El silencio" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="chapterTextInput">Texto completo del capítulo</label>
+          <textarea id="chapterTextInput" style="min-height:560px;" placeholder="Pega aquí el texto completo del capítulo."></textarea>
+        </div>
+
+        <div class="toolbar">
+          <button class="success" onclick="saveChapter()">Guardar capítulo</button>
+          <button class="secondary" onclick="clearEditor()">Limpiar texto</button>
+          <button class="danger" onclick="deleteCurrentChapter()">Eliminar capítulo</button>
+        </div>
+
+        <div class="status" id="chapterStatus">Sin cambios recientes.</div>
+      </div>
+    </section>
+
+    <section id="bookPanel" class="panel">
+      <div class="layout-book">
+        <aside class="book-sidebar">
+          <div class="book-cover">
+            <div class="kicker">Vista libro</div>
+            <h2 id="coverTitle">Los que no tenían voz</h2>
+            <p>
+              Naim y Karim llegan sin idioma, sin hogar y sin voz. En Cáceres empiezan a reconstruirse a través del rap, el trap y la poesía.
+            </p>
+          </div>
+
+          <div class="stats-box">
+            <h3 style="margin-top:0;">Evolución del libro</h3>
+
+            <div class="stats-grid">
+              <div class="stat">
+                <div class="label">Capítulos con texto</div>
+                <div class="value" id="statChapters">0</div>
+              </div>
+
+              <div class="stat">
+                <div class="label">Palabras totales</div>
+                <div class="value" id="statWords">0</div>
+              </div>
+
+              <div class="stat">
+                <div class="label">Páginas modo libro</div>
+                <div class="value" id="statPages">0</div>
+              </div>
+
+              <div class="stat">
+                <div class="label">Páginas impresas reales</div>
+                <div class="value" id="statPrintPages">0</div>
+              </div>
+
+              <div class="stat">
+                <div class="label">Páginas EPUB/iPad</div>
+                <div class="value" id="statEpubPages">0</div>
+              </div>
+
+              <div class="stat">
+                <div class="label">Tiempo lectura</div>
+                <div class="value" id="statReadingTime">0 h</div>
+              </div>
+
+              <div class="stat">
+                <div class="label">Hoja actual</div>
+                <div class="value" id="statCurrentPage">0</div>
+              </div>
+            </div>
+
+            <div class="small-note" style="margin-top:10px;">
+              Las páginas impresas reales se calculan con unas 280 palabras por página.
+            </div>
+          </div>
+
+          <div class="book-nav">
+            <h3 style="margin-top:0;">Capítulo</h3>
+            <select id="bookChapterSelect" onchange="goToSelectedBookChapter()">
+              <option value="">Todavía no hay capítulos</option>
+            </select>
+            <div class="small-note" style="margin-top:10px;">
+              Elige un capítulo para abrirlo directamente.
+            </div>
+          </div>
+        </aside>
+
+        <div class="book-frame">
+          <div class="book-topbar">
+            <div>
+              <h2 id="bookTitleBar">Portada</h2>
+              <div class="meta" id="bookMetaBar">Libro en progreso</div>
+            </div>
+
+            <div class="toolbar" style="margin:0;">
+              <button class="secondary" onclick="prevBookPage()">Página anterior</button>
+              <button class="secondary" onclick="nextBookPage()">Página siguiente</button>
+            </div>
+          </div>
+
+          <div id="bookEmpty" class="book-empty">
+            Aquí verás tu novela como un libro. En cuanto guardes capítulos con texto completo, aparecerán maquetados en páginas con numeración estimada.
+          </div>
+
+          <div id="bookReader" class="hidden">
+            <div class="book-page-wrap">
+              <div class="book-page">
+                <h3 id="readerChapterTitle"></h3>
+                <div id="readerChapterContent" class="book-page-content"></div>
+                <div id="readerPageNumber" class="page-number"></div>
+              </div>
+            </div>
+
+            <div class="book-actions">
+              <button class="secondary" onclick="openCurrentChapterInEditor()">Editar este capítulo</button>
+              <button class="secondary" onclick="prevBookPage()">Página anterior</button>
+              <button class="secondary" onclick="nextBookPage()">Página siguiente</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+
+  <script>
+    const PROJECT_BIBLE = {
+      bookTitle: "Los que no tenían voz"
+    };
+
+    const CHAPTER_BLUEPRINTS = [
+      {number:1,title:"El silencio"},
+      {number:2,title:"Una ciudad que no dice nada"},
+      {number:3,title:"Las miradas"},
+      {number:4,title:"El idioma es un muro"},
+      {number:5,title:"El primer día"},
+      {number:6,title:"Lo que no se dice"},
+      {number:7,title:"Una canción ajena"},
+      {number:8,title:"Palabras robadas"},
+      {number:9,title:"La primera pelea"},
+      {number:10,title:"Barras"},
+      {number:11,title:"Lo que suena dentro"},
+      {number:12,title:"Una voz prestada"},
+      {number:13,title:"Los que miran"},
+      {number:14,title:"Rabia con métrica"},
+      {number:15,title:"La primera vez"},
+      {number:16,title:"Nombre de guerra"},
+      {number:17,title:"El precio de ser vistos"},
+      {number:18,title:"La calle también canta"},
+      {number:19,title:"Lo que falta"},
+      {number:20,title:"Demasiado pronto"},
+      {number:21,title:"Caer juntos"},
+      {number:22,title:"Nuestra lengua"},
+      {number:23,title:"La primera grabación"},
+      {number:24,title:"Nadie esperaba eso"},
+      {number:25,title:"Las piezas"},
+      {number:26,title:"Contravoz"},
+      {number:27,title:"Antes de cantar"},
+      {number:28,title:"Los que no tenían voz"}
+    ];
+
+    const STORAGE_KEY = "libro_ia_editor_limpio_v2_frontmatter";
+
+    let state = {
+      frontMatter:{
+        dedication:"",
+        prologue:""
+      },
+      chapters:{},
+      currentTarget:1,
+      currentEditing:1,
+      bookPages:[],
+      currentBookPageIndex:0,
+      epubCoverData:null
+    };
+
+    let epubCoverData = null;
+
+    function saveState(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+
+      try{
+        const parsed = JSON.parse(raw);
+
+        state = {
+          ...state,
+          ...parsed,
+          frontMatter:parsed.frontMatter || {dedication:"",prologue:""},
+          chapters:parsed.chapters || {},
+          bookPages:[]
+        };
+      }catch(err){
+        console.error(err);
+      }
+    }
+
+    function getBlueprint(num){
+      return CHAPTER_BLUEPRINTS.find(c => c.number === Number(num)) || null;
+    }
+
+    function getWrittenNumbers(){
+      return Object.keys(state.chapters)
+        .map(n => Number(n))
+        .filter(n => state.chapters[n])
+        .sort((a,b) => a-b);
+    }
+
+    function getChaptersForExport(){
+      return getWrittenNumbers()
+        .map(n => state.chapters[n])
+        .filter(ch => ch && ch.text && ch.text.trim());
+    }
+
+    function wordCount(text){
+      const clean = String(text || "").trim();
+      if(!clean) return 0;
+      return clean.split(/\s+/).length;
+    }
+
+    function frontMatterWords(){
+      const dedication = state.frontMatter?.dedication || "";
+      const prologue = state.frontMatter?.prologue || "";
+      return wordCount(dedication) + wordCount(prologue);
+    }
+
+    function totalWords(){
+      const chapterWords = getChaptersForExport().reduce((acc,ch) => {
+        return acc + wordCount(ch.text || "");
+      },0);
+
+      return frontMatterWords() + chapterWords;
+    }
+
+    function cssNumber(varName, fallback){
+      const raw = getComputedStyle(document.documentElement).getPropertyValue(varName);
+      const num = Number(String(raw || "").trim());
+      return Number.isFinite(num) && num > 0 ? num : fallback;
+    }
+
+    function totalEstimatedPages(){
+      return Math.max(0, Math.ceil(totalWords() / cssNumber("--words-per-page", 320)));
+    }
+
+    function totalEstimatedPrintPages(){
+      return Math.max(0, Math.ceil(totalWords() / cssNumber("--print-words-per-page", 280)));
+    }
+
+    function totalEstimatedEpubPages(){
+      return Math.max(0, Math.ceil(totalWords() / cssNumber("--epub-words-per-page", 220)));
+    }
+
+    function estimatedReadingTime(){
+      const words = totalWords();
+      const wordsPerMinute = 220;
+      const minutes = Math.ceil(words / wordsPerMinute);
+
+      if(!minutes) return "0 h";
+
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+
+      if(h <= 0) return `${m} min`;
+      if(m === 0) return `${h} h`;
+
+      return `${h} h ${m} min`;
+    }
+
+    function saveFrontMatter(){
+      state.frontMatter = {
+        dedication:document.getElementById("dedicationInput").value.trim(),
+        prologue:document.getElementById("prologueInput").value.trim()
+      };
+
+      saveState();
+      renderBookReader();
+
+      document.getElementById("chapterStatus").textContent = "Dedicatoria y prólogo guardados.";
+    }
+
+    function fillTargetSelect(){
+      const select = document.getElementById("chapterTargetSelect");
+      if(!select) return;
+
+      select.innerHTML = "";
+
+      CHAPTER_BLUEPRINTS.forEach(ch => {
+        const opt = document.createElement("option");
+        const saved = state.chapters[ch.number];
+        const done = saved?.text?.trim() ? " — con texto" : "";
+
+        opt.value = ch.number;
+        opt.textContent = `Capítulo ${ch.number}. ${ch.title}${done}`;
+
+        if(Number(state.currentEditing || state.currentTarget) === ch.number){
+          opt.selected = true;
+        }
+
+        select.appendChild(opt);
+      });
+    }
+
+    function onEditorChapterChange(){
+      const num = Number(document.getElementById("chapterTargetSelect").value);
+      state.currentTarget = num;
+      state.currentEditing = num;
+      loadChapterIntoEditor(num);
+      saveState();
+    }
+
+    function loadChapterIntoEditor(num){
+      const bp = getBlueprint(num);
+      const saved = state.chapters[num] || {};
+
+      document.getElementById("chapterNumberInput").value = num;
+
+      document.getElementById("chapterTitleInput").value =
+        saved.title || (bp ? `Capítulo ${bp.number}. ${bp.title}` : `Capítulo ${num}`);
+
+      document.getElementById("chapterTextInput").value = saved.text || "";
+      document.getElementById("chapterStatus").textContent = `Editando capítulo ${num}.`;
+    }
+
+    function clearEditor(){
+      document.getElementById("chapterTextInput").value = "";
+      document.getElementById("chapterStatus").textContent = "Texto limpiado. El capítulo no se borrará hasta que guardes.";
+    }
+
+    function saveChapter(){
+      const num = Number(document.getElementById("chapterNumberInput").value);
+      const title = document.getElementById("chapterTitleInput").value.trim();
+      const text = document.getElementById("chapterTextInput").value.trim();
+
+      if(!num || !title){
+        document.getElementById("chapterStatus").textContent = "Debes indicar número y título.";
+        return;
+      }
+
+      state.chapters[num] = {
+        number:num,
+        title,
+        synopsis:"",
+        notes:"",
+        text,
+        updatedAt:new Date().toISOString()
+      };
+
+      state.currentEditing = num;
+      state.currentTarget = num;
+
+      saveState();
+      renderAll();
+
+      document.getElementById("chapterStatus").textContent = `Capítulo ${num} guardado.`;
+    }
+
+    function deleteCurrentChapter(){
+      const num = Number(document.getElementById("chapterNumberInput").value);
+
+      if(!num || !state.chapters[num]){
+        document.getElementById("chapterStatus").textContent = "Ese capítulo no está guardado.";
+        return;
+      }
+
+      if(!confirm(`¿Eliminar el capítulo ${num}?`)) return;
+
+      delete state.chapters[num];
+      saveState();
+      renderAll();
+
+      document.getElementById("chapterStatus").textContent = `Capítulo ${num} eliminado.`;
+    }
+
+    function splitTextIntoParagraphs(text){
+      return String(text || "")
+        .replace(/\r\n/g,"\n")
+        .split(/\n\s*\n/)
+        .map(p => p.trim())
+        .filter(Boolean);
+    }
+
+    function escapeHtml(str){
+      return String(str || "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function escapeXml(str){
+      return String(str || "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&apos;");
+    }
+
+    function buildBookPages(){
+      const pages = [];
+      let runningPageNumber = 1;
+      const approxCharsPerPage = 2300;
+
+      function addSectionPages(sectionNumber, sectionTitle, text){
+        const paragraphs = splitTextIntoParagraphs(text || "");
+        const sectionPages = [];
+        let currentPage = "";
+
+        paragraphs.forEach(paragraph => {
+          const block = currentPage ? currentPage + "\n\n" + paragraph : paragraph;
+
+          if(block.length > approxCharsPerPage && currentPage.trim()){
+            sectionPages.push(currentPage);
+            currentPage = paragraph;
+          }else{
+            currentPage = block;
+          }
+        });
+
+        if(currentPage.trim()){
+          sectionPages.push(currentPage);
+        }
+
+        sectionPages.forEach((content,index) => {
+          pages.push({
+            chapterNumber:sectionNumber,
+            chapterTitle:sectionTitle,
+            pageInChapter:index + 1,
+            chapterPageCount:sectionPages.length,
+            absolutePageNumber:runningPageNumber,
+            content,
+            isFrontMatter:true
+          });
+
+          runningPageNumber++;
+        });
+      }
+
+      if(state.frontMatter?.dedication?.trim()){
+        addSectionPages("dedication","Dedicatoria",state.frontMatter.dedication);
+      }
+
+      if(state.frontMatter?.prologue?.trim()){
+        addSectionPages("prologue","Prólogo",state.frontMatter.prologue);
+      }
+
+      const chapters = getChaptersForExport();
+
+      chapters.forEach(ch => {
+        const paragraphs = splitTextIntoParagraphs(ch.text || "");
+        const chapterPages = [];
+        let currentPage = "";
+
+        paragraphs.forEach(paragraph => {
+          const block = currentPage ? currentPage + "\n\n" + paragraph : paragraph;
+
+          if(block.length > approxCharsPerPage && currentPage.trim()){
+            chapterPages.push(currentPage);
+            currentPage = paragraph;
+          }else{
+            currentPage = block;
+          }
+        });
+
+        if(currentPage.trim()){
+          chapterPages.push(currentPage);
+        }
+
+        if(chapterPages.length === 0){
+          chapterPages.push("");
+        }
+
+        chapterPages.forEach((content,index) => {
+          pages.push({
+            chapterNumber:ch.number,
+            chapterTitle:ch.title || `Capítulo ${ch.number}`,
+            pageInChapter:index + 1,
+            chapterPageCount:chapterPages.length,
+            absolutePageNumber:runningPageNumber,
+            content,
+            isFrontMatter:false
+          });
+
+          runningPageNumber++;
+        });
+      });
+
+      state.bookPages = pages;
+    }
+
+    function renderBookStats(){
+      const chaptersWithText = getChaptersForExport().length;
+
+      document.getElementById("statChapters").textContent =
+        chaptersWithText.toLocaleString("es-ES");
+
+      document.getElementById("statWords").textContent =
+        totalWords().toLocaleString("es-ES");
+
+      document.getElementById("statPages").textContent =
+        totalEstimatedPages().toLocaleString("es-ES");
+
+      document.getElementById("statPrintPages").textContent =
+        totalEstimatedPrintPages().toLocaleString("es-ES");
+
+      document.getElementById("statEpubPages").textContent =
+        totalEstimatedEpubPages().toLocaleString("es-ES");
+
+      document.getElementById("statReadingTime").textContent =
+        estimatedReadingTime();
+
+      document.getElementById("statCurrentPage").textContent =
+        state.bookPages.length
+          ? state.bookPages[state.currentBookPageIndex]?.absolutePageNumber || 1
+          : 0;
+    }
+
+    function renderBookIndex(){
+      const select = document.getElementById("bookChapterSelect");
+      if(!select) return;
+
+      select.innerHTML = "";
+
+      if(!state.bookPages.length){
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Todavía no hay capítulos";
+        select.appendChild(opt);
+        return;
+      }
+
+      if(state.frontMatter?.dedication?.trim()){
+        const pageStart = state.bookPages.find(p => p.chapterNumber === "dedication")?.absolutePageNumber || 1;
+        const opt = document.createElement("option");
+        opt.value = "dedication";
+        opt.textContent = `Dedicatoria — pág. ${pageStart}`;
+
+        if(state.bookPages[state.currentBookPageIndex]?.chapterNumber === "dedication"){
+          opt.selected = true;
+        }
+
+        select.appendChild(opt);
+      }
+
+      if(state.frontMatter?.prologue?.trim()){
+        const pageStart = state.bookPages.find(p => p.chapterNumber === "prologue")?.absolutePageNumber || 1;
+        const opt = document.createElement("option");
+        opt.value = "prologue";
+        opt.textContent = `Prólogo — pág. ${pageStart}`;
+
+        if(state.bookPages[state.currentBookPageIndex]?.chapterNumber === "prologue"){
+          opt.selected = true;
+        }
+
+        select.appendChild(opt);
+      }
+
+      const chapters = getChaptersForExport();
+
+      chapters.forEach(ch => {
+        const pageStart = state.bookPages.find(p => p.chapterNumber === ch.number)?.absolutePageNumber || 1;
+
+        const opt = document.createElement("option");
+        opt.value = ch.number;
+        opt.textContent = `${ch.title || `Capítulo ${ch.number}`} — pág. ${pageStart}`;
+
+        if(state.bookPages[state.currentBookPageIndex]?.chapterNumber === ch.number){
+          opt.selected = true;
+        }
+
+        select.appendChild(opt);
+      });
+    }
+
+    function renderBookReader(){
+      buildBookPages();
+
+      const hasPages = state.bookPages.length > 0;
+      const empty = document.getElementById("bookEmpty");
+      const reader = document.getElementById("bookReader");
+
+      if(!hasPages){
+        empty.classList.remove("hidden");
+        reader.classList.add("hidden");
+        document.getElementById("bookTitleBar").textContent = "Portada";
+        document.getElementById("bookMetaBar").textContent = "Libro en progreso";
+        renderBookStats();
+        renderBookIndex();
+        return;
+      }
+
+      if(state.currentBookPageIndex >= state.bookPages.length){
+        state.currentBookPageIndex = state.bookPages.length - 1;
+      }
+
+      if(state.currentBookPageIndex < 0){
+        state.currentBookPageIndex = 0;
+      }
+
+      const page = state.bookPages[state.currentBookPageIndex];
+
+      empty.classList.add("hidden");
+      reader.classList.remove("hidden");
+
+      document.getElementById("bookTitleBar").textContent = page.chapterTitle;
+      document.getElementById("bookMetaBar").textContent =
+        `Página ${page.absolutePageNumber} de ${state.bookPages.length}`;
+
+      document.getElementById("readerChapterTitle").textContent = page.chapterTitle;
+      document.getElementById("readerChapterContent").textContent = page.content;
+      document.getElementById("readerPageNumber").textContent = page.absolutePageNumber;
+
+      renderBookStats();
+      renderBookIndex();
+    }
+
+    function prevBookPage(){
+      if(!state.bookPages.length) return;
+
+      if(state.currentBookPageIndex > 0){
+        state.currentBookPageIndex--;
+        saveState();
+        renderBookReader();
+      }
+    }
+
+    function nextBookPage(){
+      if(!state.bookPages.length) return;
+
+      if(state.currentBookPageIndex < state.bookPages.length - 1){
+        state.currentBookPageIndex++;
+        saveState();
+        renderBookReader();
+      }
+    }
+
+    function goToChapterInBook(chapterNumber){
+      const parsedNumber = isNaN(Number(chapterNumber)) ? chapterNumber : Number(chapterNumber);
+      const idx = state.bookPages.findIndex(p => p.chapterNumber === parsedNumber);
+
+      if(idx >= 0){
+        state.currentBookPageIndex = idx;
+        saveState();
+        renderBookReader();
+      }
+    }
+
+    function goToSelectedBookChapter(){
+      const select = document.getElementById("bookChapterSelect");
+      if(!select || !select.value) return;
+
+      goToChapterInBook(select.value);
+    }
+
+    function openCurrentChapterInEditor(){
+      if(!state.bookPages.length) return;
+
+      const page = state.bookPages[state.currentBookPageIndex];
+
+      if(page.isFrontMatter){
+        switchTab("workPanel");
+        return;
+      }
+
+      const chapterNumber = page.chapterNumber;
+
+      state.currentEditing = chapterNumber;
+      state.currentTarget = chapterNumber;
+
+      fillTargetSelect();
+      loadChapterIntoEditor(chapterNumber);
+      switchTab("workPanel");
+      saveState();
+    }
+
+    function safeFileName(name){
+      return String(name || "libro")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g,"")
+        .replace(/[^\w\d\-]+/g,"_")
+        .replace(/^_+|_+$/g,"")
+        .toLowerCase();
+    }
+
+    function downloadBlob(blob, filename){
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = filename;
+      a.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    function buildPlainBookText(){
+      let out = "";
+      const chapters = getChaptersForExport();
+
+      if(state.frontMatter?.dedication?.trim()){
+        out += `DEDICATORIA\n\n`;
+        out += `${state.frontMatter.dedication.trim()}\n\n`;
+        out += `----------------------------------------\n\n`;
+      }
+
+      if(state.frontMatter?.prologue?.trim()){
+        out += `PRÓLOGO\n\n`;
+        out += `${state.frontMatter.prologue.trim()}\n\n`;
+        out += `----------------------------------------\n\n`;
+      }
+
+      chapters.forEach((ch,index) => {
+        out += `${ch.title || `Capítulo ${ch.number}`}\n\n`;
+        out += `${ch.text.trim()}\n\n`;
+
+        if(index < chapters.length - 1){
+          out += `----------------------------------------\n\n`;
+        }
+      });
+
+      return out.trim();
+    }
+
+    function exportTxt(){
+      const hasFrontMatter =
+        state.frontMatter?.dedication?.trim() ||
+        state.frontMatter?.prologue?.trim();
+
+      const chapters = getChaptersForExport();
+
+      if(!chapters.length && !hasFrontMatter){
+        alert("No hay contenido para exportar.");
+        return;
+      }
+
+      const text = buildPlainBookText();
+      const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+
+      downloadBlob(blob, `${safeFileName(PROJECT_BIBLE.bookTitle)}.txt`);
+    }
+
+    async function exportTxtChaptersZip(){
+      const chapters = getChaptersForExport();
+
+      if(!chapters.length){
+        alert("No hay capítulos para exportar.");
+        return;
+      }
+
+      if(typeof JSZip === "undefined"){
+        alert("No se ha cargado JSZip.");
+        return;
+      }
+
+      const zip = new JSZip();
+
+      if(state.frontMatter?.dedication?.trim()){
+        zip.file("00_dedicatoria.txt", `DEDICATORIA\n\n${state.frontMatter.dedication.trim()}`);
+      }
+
+      if(state.frontMatter?.prologue?.trim()){
+        zip.file("00_prologo.txt", `PRÓLOGO\n\n${state.frontMatter.prologue.trim()}`);
+      }
+
+      chapters.forEach(ch => {
+        let text = "";
+        text += `${ch.title || `Capítulo ${ch.number}`}\n\n`;
+        text += ch.text.trim();
+        text += `\n\n[FIN DEL CAPÍTULO ${ch.number}]`;
+
+        const fileName =
+          `${String(ch.number).padStart(2,"0")}_${safeFileName(ch.title || `capitulo_${ch.number}`)}.txt`;
+
+        zip.file(fileName, text);
+      });
+
+      const blob = await zip.generateAsync({
+        type:"blob",
+        mimeType:"application/zip"
+      });
+
+      downloadBlob(blob, `${safeFileName(PROJECT_BIBLE.bookTitle)}_capitulos_txt.zip`);
+    }
+
+    function buildHtmlBookDocument(){
+      const title = PROJECT_BIBLE.bookTitle || "Libro";
+      const chapters = getChaptersForExport();
+
+      let frontMatterHtml = "";
+
+      if(state.frontMatter?.dedication?.trim()){
+        frontMatterHtml += `
+<section class="chapter">
+  <h2>Dedicatoria</h2>
+  ${splitTextIntoParagraphs(state.frontMatter.dedication)
+    .map(p => `<p>${escapeHtml(p)}</p>`)
+    .join("")}
+</section>`;
+      }
+
+      if(state.frontMatter?.prologue?.trim()){
+        frontMatterHtml += `
+<section class="chapter">
+  <h2>Prólogo</h2>
+  ${splitTextIntoParagraphs(state.frontMatter.prologue)
+    .map(p => `<p>${escapeHtml(p)}</p>`)
+    .join("")}
+</section>`;
+      }
+
+      const chapterHtml = chapters.map(ch => {
+        const body = splitTextIntoParagraphs(ch.text)
+          .map(p => `<p>${escapeHtml(p)}</p>`)
+          .join("");
+
+        return `
+<section class="chapter">
+  <h2>${escapeHtml(ch.title || `Capítulo ${ch.number}`)}</h2>
+  ${body}
+</section>`;
+      }).join("\n");
+
+      return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>${escapeHtml(title)}</title>
+  <style>
+    @page {
+      size: 5.5in 8.5in;
+      margin-top: 0.65in;
+      margin-bottom: 0.65in;
+      margin-left: 0.7in;
+      margin-right: 0.55in;
+    }
+
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      color: #1f1f1f;
+      background: #fff;
+      font-size: 10.8pt;
+      line-height: 1.22;
+      margin: 0;
+      padding: 0;
+      orphans: 2;
+      widows: 2;
+    }
+
+    .book-title-page {
+      page-break-after: always;
+      height: 7in;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .book-title-page h1 {
+      font-size: 26pt;
+      font-weight: normal;
+      line-height: 1.15;
+      margin: 0;
+    }
+
+    .chapter {
+      page-break-before: always;
+    }
+
+    .chapter h2 {
+      font-size: 17pt;
+      font-weight: normal;
+      text-align: center;
+      line-height: 1.2;
+      margin: 0 0 0.55in 0;
+      padding-top: 0.35in;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin: 0;
+      text-align: justify;
+      text-indent: 0.23in;
+      hyphens: auto;
+    }
+
+    h2 + p {
+      text-indent: 0;
+    }
+
+    @media screen {
+      body {
+        background: #eee;
+        padding: 30px 0;
+      }
+
+      .book-title-page,
+      .chapter {
+        width: 5.5in;
+        min-height: 8.5in;
+        margin: 0 auto 24px auto;
+        background: white;
+        padding: 0.65in 0.55in 0.65in 0.7in;
+        box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="book-title-page">
+    <h1>${escapeHtml(title)}</h1>
+  </section>
+
+  ${frontMatterHtml}
+  ${chapterHtml}
+</body>
+</html>`;
+    }
+
+    function exportHtmlBook(){
+      const hasFrontMatter =
+        state.frontMatter?.dedication?.trim() ||
+        state.frontMatter?.prologue?.trim();
+
+      const chapters = getChaptersForExport();
+
+      if(!chapters.length && !hasFrontMatter){
+        alert("No hay contenido para exportar.");
+        return;
+      }
+
+      const html = buildHtmlBookDocument();
+      const blob = new Blob([html], {type:"text/html;charset=utf-8"});
+
+      downloadBlob(blob, `${safeFileName(PROJECT_BIBLE.bookTitle)}.html`);
+    }
+
+    function cleanExportText(text){
+      return String(text || "")
+        .replace(/\u200B/g,"")
+        .replace(/\u200C/g,"")
+        .replace(/\u200D/g,"")
+        .replace(/\uFEFF/g,"")
+        .replace(/\u00A0/g," ")
+        .replace(/￼/g,"")
+        .trim();
+    }
+
+    function exportDocx(){
+      try{
+        const chapters = getChaptersForExport();
+
+        const hasFrontMatter =
+          state.frontMatter?.dedication?.trim() ||
+          state.frontMatter?.prologue?.trim();
+
+        if(!chapters.length && !hasFrontMatter){
+          alert("No hay contenido para exportar.");
+          return;
+        }
+
+        if(typeof docx === "undefined"){
+          alert("La librería DOCX no está cargada.");
+          return;
+        }
+
+        const {
+          Document,
+          Packer,
+          Paragraph,
+          TextRun,
+          AlignmentType
+        } = docx;
+
+        const children = [];
+        const title = PROJECT_BIBLE.bookTitle || "Libro";
+
+        children.push(
+          new Paragraph({
+            alignment:AlignmentType.CENTER,
+            spacing:{after:400},
+            children:[
+              new TextRun({
+                text:cleanExportText(title),
+                bold:false,
+                size:52
+              })
+            ]
+          })
+        );
+
+        if(state.frontMatter?.dedication?.trim()){
+          children.push(
+            new Paragraph({
+              alignment:AlignmentType.CENTER,
+              spacing:{before:300,after:300},
+              pageBreakBefore:true,
+              children:[
+                new TextRun({
+                  text:"Dedicatoria",
+                  bold:false,
+                  size:36
+                })
+              ]
+            })
+          );
+
+          splitTextIntoParagraphs(cleanExportText(state.frontMatter.dedication)).forEach(p => {
+            children.push(
+              new Paragraph({
+                children:[
+                  new TextRun({
+                    text:cleanExportText(p),
+                    size:22
+                  })
+                ],
+                spacing:{after:120,line:300},
+                alignment:AlignmentType.JUSTIFIED,
+                indent:{firstLine:420}
+              })
+            );
+          });
+        }
+
+        if(state.frontMatter?.prologue?.trim()){
+          children.push(
+            new Paragraph({
+              alignment:AlignmentType.CENTER,
+              spacing:{before:300,after:300},
+              pageBreakBefore:true,
+              children:[
+                new TextRun({
+                  text:"Prólogo",
+                  bold:false,
+                  size:36
+                })
+              ]
+            })
+          );
+
+          splitTextIntoParagraphs(cleanExportText(state.frontMatter.prologue)).forEach(p => {
+            children.push(
+              new Paragraph({
+                children:[
+                  new TextRun({
+                    text:cleanExportText(p),
+                    size:22
+                  })
+                ],
+                spacing:{after:120,line:300},
+                alignment:AlignmentType.JUSTIFIED,
+                indent:{firstLine:420}
+              })
+            );
+          });
+        }
+
+        chapters.forEach((ch,index) => {
+          children.push(
+            new Paragraph({
+              alignment:AlignmentType.CENTER,
+              spacing:{before:300,after:300},
+              pageBreakBefore:true,
+              children:[
+                new TextRun({
+                  text:cleanExportText(ch.title || `Capítulo ${ch.number}`),
+                  bold:false,
+                  size:36
+                })
+              ]
+            })
+          );
+
+          const paragraphs = splitTextIntoParagraphs(cleanExportText(ch.text));
+
+          paragraphs.forEach(p => {
+            children.push(
+              new Paragraph({
+                children:[
+                  new TextRun({
+                    text:cleanExportText(p),
+                    size:22
+                  })
+                ],
+                spacing:{
+                  after:120,
+                  line:300
+                },
+                alignment:AlignmentType.JUSTIFIED,
+                indent:{
+                  firstLine:420
+                }
+              })
+            );
+          });
+        });
+
+        const doc = new Document({
+          sections:[
+            {
+              properties:{},
+              children
+            }
+          ]
+        });
+
+        Packer.toBlob(doc).then(blob => {
+          downloadBlob(blob, `${safeFileName(title)}.docx`);
+        }).catch(err => {
+          console.error(err);
+          alert("Error al generar el DOCX.");
+        });
+
+      }catch(err){
+        console.error(err);
+        alert("Error al exportar DOCX.");
+      }
+    }
+
+    function frontMatterToXhtml(title, text){
+      const safeTitle = escapeXml(title);
+
+      const paragraphs = splitTextIntoParagraphs(text)
+        .map(p => `<p>${escapeXml(p)}</p>`)
+        .join("\n");
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+<meta charset="utf-8" />
+<title>${safeTitle}</title>
+<link rel="stylesheet" type="text/css" href="styles.css"/>
+</head>
+<body>
+<section>
+<h1>${safeTitle}</h1>
+${paragraphs}
+</section>
+</body>
+</html>`;
+    }
+
+    function chapterToXhtml(ch){
+      const title = escapeXml(ch.title || `Capítulo ${ch.number}`);
+
+      const paragraphs = splitTextIntoParagraphs(ch.text)
+        .map(p => `<p>${escapeXml(p)}</p>`)
+        .join("\n");
+
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+<meta charset="utf-8" />
+<title>${title}</title>
+<link rel="stylesheet" type="text/css" href="styles.css"/>
+</head>
+<body>
+<section>
+<h1>${title}</h1>
+${paragraphs}
+</section>
+</body>
+</html>`;
+    }
+
+    async function exportEpub(){
+      const chapters = getChaptersForExport();
+
+      if(!chapters.length){
+        alert("No hay capítulos para exportar EPUB.");
+        return;
+      }
+
+      if(typeof JSZip === "undefined"){
+        alert("No se ha cargado JSZip.");
+        return;
+      }
+
+      const coverInfo = getCoverFileInfo();
+
+      if(!coverInfo){
+        alert("Primero carga una portada EPUB.");
+        return;
+      }
+
+      const title = PROJECT_BIBLE.bookTitle || "Libro";
+      const author = "Autor";
+      const fileBase = safeFileName(title) || "libro";
+      const zip = new JSZip();
+
+      zip.file("mimetype", "application/epub+zip", {compression:"STORE"});
+
+      zip.folder("META-INF").file("container.xml", `<?xml version="1.0" encoding="UTF-8"?>
+<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
+<rootfiles>
+<rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>
+</rootfiles>
+</container>`);
+
+      const oebps = zip.folder("OEBPS");
+
+      oebps.file("styles.css", `
+body{
+  font-family:Georgia,"Times New Roman",serif;
+  line-height:1.45;
+  margin:4%;
+  font-size:1em;
+}
+h1{
+  text-align:center;
+  margin-bottom:1.2em;
+}
+p{
+  margin:0 0 .65em 0;
+  text-align:justify;
+}
+.cover-wrap{
+  text-align:center;
+  margin-top:5%;
+}
+.cover-wrap img{
+  max-width:90%;
+  height:auto;
+}
+`);
+
+      oebps.file(coverInfo.fileName, coverInfo.bytes);
+
+      oebps.file("cover.xhtml", `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Portada</title>
+<link rel="stylesheet" type="text/css" href="styles.css"/>
+</head>
+<body>
+<section class="cover-wrap">
+<img src="${coverInfo.fileName}" alt="Portada"/>
+</section>
+</body>
+</html>`);
+
+      let frontMatterManifest = "";
+      let frontMatterSpine = "";
+      let frontMatterNav = "";
+
+      if(state.frontMatter?.dedication?.trim()){
+        oebps.file("dedication.xhtml", frontMatterToXhtml("Dedicatoria", state.frontMatter.dedication));
+        frontMatterManifest += `<item id="dedication" href="dedication.xhtml" media-type="application/xhtml+xml"/>\n`;
+        frontMatterSpine += `<itemref idref="dedication"/>\n`;
+        frontMatterNav += `<li><a href="dedication.xhtml">Dedicatoria</a></li>\n`;
+      }
+
+      if(state.frontMatter?.prologue?.trim()){
+        oebps.file("prologue.xhtml", frontMatterToXhtml("Prólogo", state.frontMatter.prologue));
+        frontMatterManifest += `<item id="prologue" href="prologue.xhtml" media-type="application/xhtml+xml"/>\n`;
+        frontMatterSpine += `<itemref idref="prologue"/>\n`;
+        frontMatterNav += `<li><a href="prologue.xhtml">Prólogo</a></li>\n`;
+      }
+
+      const navItems = frontMatterNav + chapters.map(ch => {
+        const fname = `chapter${ch.number}.xhtml`;
+        oebps.file(fname, chapterToXhtml(ch));
+        return `<li><a href="${fname}">${escapeXml(ch.title || `Capítulo ${ch.number}`)}</a></li>`;
+      }).join("\n");
+
+      oebps.file("nav.xhtml", `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="es" xml:lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Índice</title>
+</head>
+<body>
+<nav epub:type="toc" id="toc">
+<h1>Índice</h1>
+<ol>
+${navItems}
+</ol>
+</nav>
+</body>
+</html>`);
+
+      const manifestChapters = chapters.map(ch =>
+        `<item id="chapter${ch.number}" href="chapter${ch.number}.xhtml" media-type="application/xhtml+xml"/>`
+      ).join("\n");
+
+      const spineChapters = chapters.map(ch =>
+        `<itemref idref="chapter${ch.number}"/>`
+      ).join("\n");
+
+      const bookId = `book-${Date.now()}`;
+
+      oebps.file("content.opf", `<?xml version="1.0" encoding="UTF-8"?>
+<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" xml:lang="es">
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+<dc:identifier id="bookid">${bookId}</dc:identifier>
+<dc:title>${escapeXml(title)}</dc:title>
+<dc:language>es</dc:language>
+<dc:creator>${escapeXml(author)}</dc:creator>
+</metadata>
+<manifest>
+<item id="cover-image" href="${coverInfo.fileName}" media-type="${coverInfo.mimeType}" properties="cover-image"/>
+<item id="coverpage" href="cover.xhtml" media-type="application/xhtml+xml"/>
+<item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
+<item id="css" href="styles.css" media-type="text/css"/>
+${frontMatterManifest}
+${manifestChapters}
+</manifest>
+<spine>
+<itemref idref="coverpage"/>
+<itemref idref="nav"/>
+${frontMatterSpine}
+${spineChapters}
+</spine>
+</package>`);
+
+      const blob = await zip.generateAsync({
+        type:"blob",
+        mimeType:"application/epub+zip"
+      });
+
+      downloadBlob(blob, `${fileBase}.epub`);
+    }
+
+    function exportData(){
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+      downloadBlob(blob, "libro_ia_backup.json");
+    }
+
+    function triggerImportData(){
+      document.getElementById("importJsonInput").click();
+    }
+
+    function importDataFromFile(event){
+      const file = event.target.files && event.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function(e){
+        try{
+          const imported = JSON.parse(e.target.result);
+
+          if(!imported || typeof imported !== "object"){
+            alert("El archivo no contiene un proyecto válido.");
+            return;
+          }
+
+          state = {
+            ...state,
+            frontMatter:imported.frontMatter || {dedication:"",prologue:""},
+            chapters:imported.chapters || {},
+            currentTarget:Number(imported.currentTarget) || 1,
+            currentEditing:Number(imported.currentEditing) || 1,
+            currentBookPageIndex:Number(imported.currentBookPageIndex) || 0,
+            epubCoverData:imported.epubCoverData || null,
+            bookPages:[]
+          };
+
+          epubCoverData = state.epubCoverData || null;
+
+          saveState();
+          renderAll();
+
+          alert("Proyecto importado correctamente.");
+        }catch(err){
+          console.error(err);
+          alert("No se pudo importar el archivo JSON.");
+        }finally{
+          event.target.value = "";
+        }
+      };
+
+      reader.readAsText(file, "utf-8");
+    }
+
+    function triggerCoverImageInput(){
+      document.getElementById("coverImageInput").click();
+    }
+
+    function loadCoverImage(event){
+      const file = event.target.files && event.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = function(e){
+        epubCoverData = {
+          name:file.name,
+          type:file.type || "image/jpeg",
+          dataUrl:e.target.result
+        };
+
+        state.epubCoverData = epubCoverData;
+        saveState();
+
+        alert("Portada cargada correctamente para EPUB.");
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function dataURLToUint8Array(dataURL){
+      const base64 = dataURL.split(",")[1];
+      const binary = atob(base64);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+
+      for(let i = 0; i < len; i++){
+        bytes[i] = binary.charCodeAt(i);
+      }
+
+      return bytes;
+    }
+
+    function getCoverFileInfo(){
+      if(!epubCoverData) return null;
+
+      let ext = "jpg";
+      let mime = "image/jpeg";
+
+      if(epubCoverData.type === "image/png"){
+        ext = "png";
+        mime = "image/png";
+      }else if(epubCoverData.type === "image/webp"){
+        ext = "webp";
+        mime = "image/webp";
+      }
+
+      return {
+        fileName:`cover.${ext}`,
+        mimeType:mime,
+        bytes:dataURLToUint8Array(epubCoverData.dataUrl)
+      };
+    }
+
+    function resetChapterData(){
+      if(!confirm("¿Vaciar todos los capítulos guardados? La dedicatoria y el prólogo se conservarán.")) return;
+
+      state.chapters = {};
+      state.bookPages = [];
+      state.currentBookPageIndex = 0;
+
+      saveState();
+      renderAll();
+
+      document.getElementById("chapterStatus").textContent = "Capítulos vaciados. Dedicatoria y prólogo conservados.";
+    }
+
+    function hardResetAll(){
+      if(!confirm("Esto borrará todo el almacenamiento local de esta novela, incluida dedicatoria, prólogo y capítulos. ¿Continuar?")) return;
+
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+
+    function switchTab(id){
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === id);
+      });
+
+      document.querySelectorAll(".panel").forEach(panel => {
+        panel.classList.toggle("active", panel.id === id);
+      });
+
+      if(id === "bookPanel"){
+        renderBookReader();
+      }
+    }
+
+    function setupTabs(){
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+      });
+    }
+
+    function renderAll(){
+      fillTargetSelect();
+
+      if(!state.frontMatter){
+        state.frontMatter = {dedication:"",prologue:""};
+      }
+
+      const dedicationInput = document.getElementById("dedicationInput");
+      const prologueInput = document.getElementById("prologueInput");
+
+      if(dedicationInput){
+        dedicationInput.value = state.frontMatter.dedication || "";
+      }
+
+      if(prologueInput){
+        prologueInput.value = state.frontMatter.prologue || "";
+      }
+
+      if(!state.currentEditing){
+        state.currentEditing = state.currentTarget || 1;
+      }
+
+      loadChapterIntoEditor(state.currentEditing || 1);
+      renderBookReader();
+
+      document.getElementById("coverTitle").textContent = PROJECT_BIBLE.bookTitle;
+    }
+
+    function init(){
+      loadState();
+      epubCoverData = state.epubCoverData || null;
+      setupTabs();
+      renderAll();
+    }
+
+    init();
+  </script>
+</body>
+</html>
